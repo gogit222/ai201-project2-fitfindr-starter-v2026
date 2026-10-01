@@ -13,8 +13,8 @@
 > python app.py ask 'vintage graphic tee under $30'
 > ```
 >
-> All three tools are stubs, so that last command will do nothing useful yet.
-> That's the starting position.
+> The tools and planning loop are implemented, so that last command runs a
+> complete search, outfit suggestion, and fit-card flow.
 >
 > **The rest of this file is your submission.** Fill it in as you go.
 
@@ -39,9 +39,12 @@
 
 ## What This Does
 
-<!-- Three or four sentences: what a user asks for, and what they get back. -->
-
-
+FitFindr takes a description of a secondhand clothing item, with an optional
+size and maximum price, and searches local listings for matches. For the best
+match, it suggests outfits using the user's wardrobe, or general styling advice
+if the wardrobe is empty. It then creates a short, post-ready fit-card caption
+with the item's details. If no listing matches, it stops and tells the user
+which search constraints to change.
 
 ---
 
@@ -113,7 +116,34 @@
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'vintage graphic tee under $30'
+
+     Found:    Y2K Baby Tee — Butterfly Print — $18.0 on depop
+
+     Outfit:   Here are two practical, wearable outfits built around your new Y2K butterfly baby tee and pieces from your wardrobe:
+
+### Outfit 1: High-Contrast Y2K Streetwear
+* **Bottoms:** Baggy straight-leg jeans (dark wash)
+* **Shoes:** Chunky white sneakers
+* **Accessories:** Black crossbody bag
+
+**How it works:**
+This outfit leans directly into the Y2K aesthetic of the baby tee by playing with proportions. Because the butterfly tee is fitted and cropped, it creates a great silhouette when paired with your high-waisted, baggy dark-wash jeans. Tying the look together with the chunky white sneakers balances the chunky denim while keeping the footwear light and casual, and the black crossbody bag matches the streetwear vibe without competing with the pink and purple butterfly graphic.
+
+***
+
+### Outfit 2: Casual Edge (with Layering)
+* **Outerwear:** Vintage black denim jacket
+* **Bottoms:** Wide-leg khaki trousers
+* **Shoes:** Black combat boots
+* **Accessories:** Brown leather belt, black crossbody bag
+
+**How it works:**
+This outfit mixes the cute, soft cottagecore elements of the baby tee with tougher, minimal pieces. Tucking the fitted baby tee into the wide-leg khaki trousers defines your waist, especially when cinched with the brown leather belt. Throwing on the slightly cropped vintage black denim jacket and grounding the look with black combat boots adds an effortless, edgy contrast to the pink and purple tones of the shirt.
+
+     Fit card: Found the absolute dream Y2K Baby Tee — Butterfly Print scrolling depop for just $18.00. I’m living for the pink and purple graphic and can’t wait to style it with baggy dark-wash jeans and chunky sneakers for an easy weekend fit.
+
+0 model calls this session, 2 served from cache
 
 ```
 
@@ -125,7 +155,6 @@ $ python -c "from tools import search_listings; print(search_listings('graphic t
 ```
 
 ```
-$ python -c "from tools import suggest_outfit; ..."
 $ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
 Here are two practical, everyday outfits built around your new vintage Levi's 501 jeans:
 
@@ -144,8 +173,6 @@ Here are two practical, everyday outfits built around your new vintage Levi's 50
 * **Accessories:** Brown leather belt threaded through the jeans to add a subtle earth-tone contrast, paired with the black crossbody bag.
 
 ```
-$ python -c "from tools import create_fit_card; ..."
-
 $ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; item=load_listings()[0]; [print(create_fit_card('jeans and white sneakers', item)) for _ in range(3)]"
 Scored these vintage Levi's 501 Jeans — Medium Wash on depop for just $38.00 and they fit like an absolute dream. Obsessed with the knee fading that only real time can make. Can't wait to wear them out with my favorite white sneakers and an oversized tee.
 Scored these vintage Levi's 501 Jeans — Medium Wash on depop for just $38.00 and they fit like an absolute dream. Obsessed with the knee fading that only real time can make. Can't wait to wear them out with my favorite white sneakers and an oversized tee.
@@ -156,24 +183,17 @@ Scored these vintage Levi's 501 Jeans — Medium Wash on depop for just $38.00 a
 The fit-card outputs are identical because `CACHE_ENABLED` is `True` in `config.py`; `TEMPERATURE` is `0.9`.
 ## How I Used AI
 
-<!-- Two specific moments. What you asked, what came back, what you changed.
-
-     "I used Claude to help me code" is not enough.
-
-     "I gave Claude my search_listings spec. It returned None on no match
-     instead of an empty list, so I changed it" is the level we want. -->
-
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked GitHub Copilot to build `create_fit_card` so it would use the model, mention the item's details, and produce a post-ready caption.
+- *What came back:* The tool generated a caption, but three calls with the same item and outfit returned identical text.
+- *What I changed:* I checked `config.py`, found `CACHE_ENABLED` was `True` while `TEMPERATURE` was `0.9`, and recorded that the repeated answer came from caching rather than a zero-temperature model.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked GitHub Copilot to implement `run_agent()` with the empty-search branch and to pass tool results through the session.
+- *What came back:* It added regex parsing and the session-backed tool sequence. My first PowerShell test accidentally expanded `$30`, so the session showed no price limit.
+- *What I changed:* I escaped the dollar sign in the test command and reran it. The session then showed `max_price: 30.0`, and a capture around `suggest_outfit` confirmed it received the exact object in `session["selected_item"]`.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
