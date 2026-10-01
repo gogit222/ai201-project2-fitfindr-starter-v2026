@@ -120,22 +120,40 @@ $ python app.py ask '...'
 **The three tools, tested one at a time**
 
 ```
-$ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
-
+$ python -c "from tools import search_listings; print(search_listings('graphic tee', size='M', max_price=30))"
+[{'id': 'lst_002', 'title': 'Y2K Baby Tee — Butterfly Print', 'description': 'Super cute early 2000s baby tee with butterfly graphic. Fitted crop length. Tag says medium but fits like a small.', 'category': 'tops', 'style_tags': ['y2k', 'vintage', 'graphic tee', 'cottagecore'], 'size': 'S/M', 'condition': 'excellent', 'price': 18.0, 'colors': ['white', 'pink', 'purple'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_017', 'title': 'Mesh Long-Sleeve Top — Black', 'description': 'Sheer black mesh long-sleeve. Great for layering under a graphic tee or over a bralette. Stretchy material, fits true to size.', 'category': 'tops', 'style_tags': ['y2k', 'grunge', 'goth', 'layering'], 'size': 'S/M', 'condition': 'excellent', 'price': 15.0, 'colors': ['black'], 'brand': None, 'platform': 'depop'}]
 ```
 
 ```
 $ python -c "from tools import suggest_outfit; ..."
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
+Here are two practical, everyday outfits built around your new vintage Levi's 501 jeans:
 
-```
+### Outfit 1: Casual Streetwear Layer
+* **The Look:** Effortless, comfortable, and plays on vintage proportions.
+* **Top:** White ribbed tank top tucked into the Levi's 501 jeans. The fitted, minimal basic balances the straight-leg cut of the denim.
+* **Outerwear:** Oversized grey crewneck sweatshirt layered over the tank. Because the sweatshirt drops below the hip, letting it slouch loosely over the mid-rise 501s gives you that easy, relaxed streetwear aesthetic.
+* **Shoes:** Chunky white sneakers to tie into the white tank and anchor the chunky proportions of the outfit.
+* **Accessories:** Black crossbody bag for everyday functionality.
+
+### Outfit 2: Edgy Double-Denim
+* **The Look:** A nod to classic Americana with a modern, grungy edge.
+* **Top:** White ribbed tank top as the base layer.
+* **Outerwear:** Vintage black denim jacket worn over the tank. The slightly cropped fit of the jacket creates a great waistline contrast against the medium wash of the Levi's 501s.
+* **Shoes:** Black combat boots. Let the hems of the 501s rest right at the top of the mid-ankle boots to show off the lace-up detail.
+* **Accessories:** Brown leather belt threaded through the jeans to add a subtle earth-tone contrast, paired with the black crossbody bag.
 
 ```
 $ python -c "from tools import create_fit_card; ..."
 
-```
-
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; item=load_listings()[0]; [print(create_fit_card('jeans and white sneakers', item)) for _ in range(3)]"
+Scored these vintage Levi's 501 Jeans — Medium Wash on depop for just $38.00 and they fit like an absolute dream. Obsessed with the knee fading that only real time can make. Can't wait to wear them out with my favorite white sneakers and an oversized tee.
+Scored these vintage Levi's 501 Jeans — Medium Wash on depop for just $38.00 and they fit like an absolute dream. Obsessed with the knee fading that only real time can make. Can't wait to wear them out with my favorite white sneakers and an oversized tee.
+Scored these vintage Levi's 501 Jeans — Medium Wash on depop for just $38.00 and they fit like an absolute dream. Obsessed with the knee fading that only real time can make. Can't wait to wear them out with my favorite white sneakers and an oversized tee.
 ---
 
+
+The fit-card outputs are identical because `CACHE_ENABLED` is `True` in `config.py`; `TEMPERATURE` is `0.9`.
 ## How I Used AI
 
 <!-- Two specific moments. What you asked, what came back, what you changed.
