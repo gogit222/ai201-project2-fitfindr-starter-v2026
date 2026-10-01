@@ -59,24 +59,24 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches listings by description keywords, with optional size and inclusive maximum-price filters. Size matching is case-insensitive: split slash-delimited sizes into whole components and match exactly, ignoring parenthetical fit notes; for example, `M` matches `S/M`, but `L` does not match `XL`.
+- **Inputs:** `description` (`str`), `size` (`str | None`), `max_price` (`float | None`).
+- **Returns:** A list of matching listing dicts, each with `id`, `title`, `description`, `category`, `style_tags`, `size`, `condition`, `price`, `colors`, `brand`, and `platform`, sorted best match first and limited to `config.SEARCH_RESULT_LIMIT`.
+- **When it has nothing:** An empty list (`[]`) if no listings match.
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Suggests one or two outfits using the item being considered and the user's wardrobe.
+- **Inputs:** `new_item` (`dict`), `wardrobe` (`dict` with an `items` list).
+- **Returns:** A non-empty string containing outfit suggestions.
+- **When it has nothing:** With an empty wardrobe, returns general styling advice for the item rather than an empty string or an error.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Writes a short, post-ready caption about the thrifted item and its suggested outfit.
+- **Inputs:** `outfit` (`str`), `new_item` (`dict`).
+- **Returns:** A two-to-four sentence caption mentioning the item, its price, its platform, and its vibe.
+- **When it has nothing:** If `outfit` is empty or whitespace, returns a descriptive message instead of raising an error.
 
 ---
 
@@ -93,7 +93,7 @@
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** If `search_listings` returns an empty list, put an actionable message in `session["error"]` and stop. Otherwise, take the first result and go to `suggest_outfit`.
 
 **Where it lives:** `agent.py::run_agent`
 
