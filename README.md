@@ -97,9 +97,9 @@
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** Regular expressions extract an optional `size` and maximum price; the remaining query text becomes the search description.
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** `parsed` feeds `search_results`. If that list is empty, `error` is set and the run stops. Otherwise the first result is stored as `selected_item`, passed with `wardrobe` to `suggest_outfit`, and then that stored suggestion and item go to `create_fit_card`; both outputs are stored in the session.
 
 ---
 
