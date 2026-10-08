@@ -15,7 +15,8 @@ Build and test your three tools in `tools.py` first. Then come here.
 
 import re
 
-from tools import search_listings, suggest_outfit, create_fit_card
+from mcp_client import call_tool
+from tools import suggest_outfit, create_fit_card
 
 
 # ── session state ─────────────────────────────────────────────────────────────
@@ -113,11 +114,11 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     session["parsed"] = _parse_query(session["query"])
     parsed = session["parsed"]
 
-    session["search_results"] = search_listings(
-        parsed["description"],
-        size=parsed["size"],
-        max_price=parsed["max_price"],
-    )
+    session["search_results"] = call_tool("search_listings", {
+        "description": parsed["description"],
+        "size": parsed["size"],
+        "max_price": parsed["max_price"],
+    })
     if not session["search_results"]:
         session["error"] = (
             "I couldn't find a listing matching those filters. Try changing "
