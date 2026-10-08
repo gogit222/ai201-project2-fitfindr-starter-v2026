@@ -195,6 +195,12 @@ The fit-card outputs are identical because `CACHE_ENABLED` is `True` in `config.
 - *What came back:* It added regex parsing and the session-backed tool sequence. My first PowerShell test accidentally expanded `$30`, so the session showed no price limit.
 - *What I changed:* I escaped the dollar sign in the test command and reran it. The session then showed `max_price: 30.0`, and a capture around `suggest_outfit` confirmed it received the exact object in `session["selected_item"]`.
 
+**Moment 3**
+
+- *What I asked for:* I asked GitHub Copilot to map the five criteria to scenarios, run the baseline, and help choose one measured improvement.
+- *What came back:* The five scenarios passed their targets 5 of 5 times. Copilot identified criterion 1's 4-of-5 target as conservative for the single fixed matching query.
+- *What I changed:* I preserved the original criterion and documented a 5-of-5 target for that scenario. I left the agent and scenario inputs unchanged, then reran the full evaluation; all five criteria still passed.
+
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 3.
@@ -370,6 +376,8 @@ behaved differently afterwards. If the rewire didn't work, say exactly where it
 broke — the error text and the last thing that worked. That earns the point in
 full. -->
 
+I registered `search_listings` in `mcp_server.py` and changed `agent.py::run_agent` to call it through `mcp_client.call_tool` over stdio. The MCP call returned the same list of listing dictionaries as the direct call; the matching query and empty-search branch behaved the same afterward.
+
 
 
 ---
@@ -434,6 +442,8 @@ The tightened criterion 1 target passed at 5/5, and criteria 2–5 also remained
 <!-- For each criterion still missed: what you'd do, and why you stopped where
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
+
+No acceptance criteria were missed in either run, so there is no missed criterion to fix. The remaining untested risk is query generalization: criteria 1, 3, and 4 use the same fixed matching query. I would add varied matching phrasings and item families to measure that broader behavior; I stopped here because this evaluation held inputs fixed to isolate one target change. Model-provider availability also remains external, though the agent now returns an actionable error when it is unavailable.
 
 
 
