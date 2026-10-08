@@ -29,6 +29,14 @@ I chose 4 of 5 rather than 5 of 5 because search uses keyword matching, so some
 natural phrasings may miss a relevant listing. One miss is tolerable, but the
 usual matching query should still complete the full flow.
 
+> **Tightened after baseline:** For the matching scenario used in this
+> evaluation, the agent completes all three tool calls and returns a fit card
+> in 5 of 5 tries.
+>
+> **Why tightened:** The fixed query passed all five baseline tries, so the
+> original 4-of-5 target was conservative for this scenario. This does not
+> establish reliability across other phrasings.
+
 ---
 
 ## 2. An impossible query stops before the second tool

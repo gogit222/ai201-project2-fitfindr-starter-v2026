@@ -327,7 +327,7 @@ search_results (title, price):
 
 **Diagnoses**
 
-No criteria were missed, so there is no failing step or mechanism to diagnose. The targets were not broadly too low: criteria 2–5 required 5/5, and each met that bar. Criterion 1's 4/5 target was conservative for this fixed query, which passed 5/5; I would tighten criterion 1 to 5/5 for this query. This does not establish reliability across other phrasings because the scenario tested only one query.
+No criteria were missed, so there is no failing step or mechanism to diagnose. The targets were not broadly too low: criteria 2–5 required 5/5, and each met that bar. Criterion 1's 4/5 target was conservative for this fixed query, which passed 5/5; I tightened criterion 1 to 5/5 and reran it. This does not establish reliability across other phrasings because the scenario tested only one query.
 
 
 
@@ -383,19 +383,44 @@ full. -->
 
 **What I changed:**
 
+I tightened criterion 1's target from 4 of 5 to 5 of 5 for the fixed matching scenario. The original criterion remains above with the revision documented in `criteria.md`; no code or scenario inputs changed.
+
 **Which failure it was meant to fix:**
+
+There was no runtime failure. This addresses the diagnosis that 4 of 5 was a conservative target after the fixed query passed 5 of 5 baseline tries.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before the second tool | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item reaches the next tool | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card preserves item facts | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Search respects the price ceiling | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+
+**Complete after run log:** [results/run_2026-10-07_2124_after.md](results/run_2026-10-07_2124_after.md)
+
+**Criterion 1 sample output, Try 1**
+
+Source: [after run log](results/run_2026-10-07_2124_after.md), produced by `agent.py::run_agent`, captured by `run_eval.py::run_once`.
+
+```text
+- stopped early: no
+- selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+- search_results: 10
+[1] search_listings (via MCP)
+     in:  description='vintage graphic tee', size=None, max_price=30.0
+[2] suggest_outfit
+     in:  new_item=(title='Y2K Baby Tee — Butterfly Print', price=18.0, platform='depop'), wardrobe_items=10
+[3] create_fit_card
+Fit card:
+Found this Y2K Baby Tee — Butterfly Print on depop for only $18.00 and I’m so obsessed. I'm styling it with dark wash baggy jeans and chunky white sneakers to lean into that ultimate 2000s streetwear vibe.
+```
 
 **Did it help, and how do I know:**
+
+The tightened criterion 1 target passed at 5/5, and criteria 2–5 also remained at 5/5. Since this was a target change only, agent behavior did not change; the result confirms the fixed scenario meets the stricter threshold, not that other query phrasings are reliable.
 
 <!-- If it made things worse, say that. Honestly reported, that earns full
      credit and is more interesting than one that worked. -->
