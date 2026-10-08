@@ -138,8 +138,11 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         return session
 
     session["selected_item"] = session["search_results"][0]
+    selected_item = session["selected_item"]
     outfit_inputs = (
-        f"new_item={session['selected_item'].get('title')!r}, "
+        f"new_item=(title={selected_item.get('title')!r}, "
+        f"price={selected_item.get('price')!r}, "
+        f"platform={selected_item.get('platform')!r}), "
         f"wardrobe_items={len(session['wardrobe'].get('items') or [])}"
     )
     try:
