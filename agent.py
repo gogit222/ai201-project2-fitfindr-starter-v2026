@@ -15,7 +15,9 @@ Build and test your three tools in `tools.py` first. Then come here.
 
 import re
 
+import trace as trace_module
 from mcp_client import call_tool
+from generate import ModelUnavailable
 from tools import suggest_outfit, create_fit_card
 
 
@@ -119,6 +121,15 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         "size": parsed["size"],
         "max_price": parsed["max_price"],
     })
+    trace_module.step(
+        "search_listings (via MCP)",
+        inputs=(
+            f"description={parsed['description']!r}, "
+            f"size={parsed['size']!r}, max_price={parsed['max_price']!r}"
+        ),
+        returned=session["search_results"],
+        note="no matches; stopping" if not session["search_results"] else "",
+    )
     if not session["search_results"]:
         session["error"] = (
             "I couldn't find a listing matching those filters. Try changing "
@@ -127,11 +138,54 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         return session
 
     session["selected_item"] = session["search_results"][0]
-    session["outfit_suggestion"] = suggest_outfit(
-        session["selected_item"], session["wardrobe"]
+    outfit_inputs = (
+        f"new_item={session['selected_item'].get('title')!r}, "
+        f"wardrobe_items={len(session['wardrobe'].get('items') or [])}"
     )
-    session["fit_card"] = create_fit_card(
-        session["outfit_suggestion"], session["selected_item"]
+    try:
+        session["outfit_suggestion"] = suggest_outfit(
+            session["selected_item"], session["wardrobe"]
+        )
+    except ModelUnavailable as exc:
+        session["error"] = (
+            f"Outfit suggestion failed because the model was unavailable. {exc}"
+        )
+        trace_module.step(
+            "suggest_outfit",
+            inputs=outfit_inputs,
+            returned=session["error"],
+            note="stopping after model failure",
+        )
+        return session
+    trace_module.step(
+        "suggest_outfit",
+        inputs=outfit_inputs,
+        returned=session["outfit_suggestion"],
+    )
+
+    fit_card_inputs = (
+        f"outfit={session['outfit_suggestion']!r}, "
+        f"new_item={session['selected_item'].get('title')!r}"
+    )
+    try:
+        session["fit_card"] = create_fit_card(
+            session["outfit_suggestion"], session["selected_item"]
+        )
+    except ModelUnavailable as exc:
+        session["error"] = (
+            f"Fit card creation failed because the model was unavailable. {exc}"
+        )
+        trace_module.step(
+            "create_fit_card",
+            inputs=fit_card_inputs,
+            returned=session["error"],
+            note="stopping after model failure",
+        )
+        return session
+    trace_module.step(
+        "create_fit_card",
+        inputs=fit_card_inputs,
+        returned=session["fit_card"],
     )
     return session
 

@@ -277,7 +277,15 @@ that produced it:
 **Happy path**
 
 ```
-
+[1] search_listings (via MCP)
+     in:  description='vintage graphic tee', size=None, max_price=30.0
+     out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[2] suggest_outfit
+     in:  new_item='Y2K Baby Tee — Butterfly Print', wardrobe_items=10
+     out: Here are two practical, wearable outfits built around your new Y2K butterfly baby tee and pieces from your war…
+[3] create_fit_card
+     in:  outfit='Here are two practical, wearable outfits built around your new Y2K butterfly baby tee and pieces from …
+     out: Found the absolute dream Y2K Baby Tee — Butterfly Print scrolling depop for just $18.00. I’m living for the pi…
 ```
 
 **Empty search**
