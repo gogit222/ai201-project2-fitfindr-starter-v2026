@@ -15,37 +15,37 @@ own criteria need — these are a starting point, not a fixed set.
 
 SCENARIOS = [
     {
-        # A query the data can match. Criterion 1.
-        "name": "matching query completes",
-        "query": "vintage graphic tee under $30",
+        # Criterion 1: the catalog uses "sneakers", not "trainers".
+        "name": "trainer synonym retrieves sneaker listings",
+        "query": "trainers",
         "wardrobe": "example",
         "criterion": 1,
     },
     {
-        # A query nothing can match. Criterion 2 — the branch.
-        "name": "impossible query stops early",
-        "query": "designer ballgown size XXS under $5",
+        # Criterion 2: singular "trouser" expands to both catalog terms.
+        "name": "singular trouser synonym retrieves results",
+        "query": "trouser",
         "wardrobe": "example",
         "criterion": 2,
     },
     {
-        # A successful handoff. Criterion 3 checks the trace against the session.
-        "name": "selected item reaches outfit tool",
-        "query": "vintage graphic tee under $30",
+        # Criterion 3: exact hits suppress the synonym fallback.
+        "name": "exact pants matches are not broadened",
+        "query": "pants",
         "wardrobe": "example",
         "criterion": 3,
     },
     {
-        # Same query selects the same item; run_eval repeats it uncached.
-        "name": "fit card preserves item facts",
-        "query": "vintage graphic tee under $30",
+        # Criterion 4: fallback results stay under the inclusive price ceiling.
+        "name": "trainer fallback respects price ceiling",
+        "query": "trainers under $20",
         "wardrobe": "example",
         "criterion": 4,
     },
     {
-        # An explicit ceiling with matching listings. Criterion 5 checks every result.
-        "name": "search respects price ceiling",
-        "query": "denim jacket under $50",
+        # Criterion 5: a size miss stops before model-backed tools.
+        "name": "trainer fallback handles no matching size",
+        "query": "trainers size M",
         "wardrobe": "example",
         "criterion": 5,
     },

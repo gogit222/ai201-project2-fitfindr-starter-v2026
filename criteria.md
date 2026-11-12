@@ -1,7 +1,8 @@
-# Acceptance criteria — FitFindr
+# Acceptance criteria — FitFindr synonym fallback
 
-Five criteria that say what "working" means for this agent, written in unit 3
-**before** any results existed.
+These five criteria evaluate the synonym-aware search extension. The earlier
+baseline criteria and their results remain documented in `README.md`; these are
+the active targets for the extension.
 
 An acceptance criterion names a target: a number, a count, a rate, or something
 a person could plainly observe. *"The agent handles errors"* is an opinion.
@@ -12,83 +13,83 @@ Under each one, write a sentence or two on **why that target** and not a
 stricter one. A reason that says something about your tools, your loop, or the
 data earns credit; *"80% seemed reasonable"* does not.
 
-> Missing your own targets next unit costs you nothing. Setting a target so
-> easy you can't miss it does.
-
-**Two are written for you. You write three.**
-
----
-
-## 1. A matching query completes all three tools
-
-Given a query that matches at least one listing, the agent completes all three
-tool calls and returns a fit card — in at least 4 of 5 tries.
-
-**Why this target:**
-I chose 4 of 5 rather than 5 of 5 because search uses keyword matching, so some
-natural phrasings may miss a relevant listing. One miss is tolerable, but the
-usual matching query should still complete the full flow.
-
-> **Tightened after baseline:** For the matching scenario used in this
-> evaluation, the agent completes all three tool calls and returns a fit card
-> in 5 of 5 tries.
->
-> **Why tightened:** The fixed query passed all five baseline tries, so the
-> original 4-of-5 target was conservative for this scenario. This does not
-> establish reliability across other phrasings.
+The search operates over a fixed local catalog, so each target is exact and
+repeatable. All five criteria include new fallback behavior rather than only
+retesting the existing agent flow.
 
 ---
 
-## 2. An impossible query stops before the second tool
+## 1. British shoe wording retrieves sneaker listings
 
-Given a query that matches no listings, the agent stops before calling
-`suggest_outfit` and returns a message naming what to change — 5 of 5 tries.
+**Target:** 5 of 5 runs.
+
+For `trainers`, `session["search_results"]` contains exactly `lst_019` followed
+by `lst_035`.
 
 **Why this target:**
-I chose 5 of 5 because an empty result should always take the same deterministic
-branch; no model wording is needed to decide whether to stop. Every run should
-avoid calling the next tool and give the user a useful change to try.
+I chose 5 of 5 because this is deterministic local search; 4 of 5 would hide a
+missed alias, and a stricter rate than 5 of 5 is impossible. A miss means users
+who say `trainers` cannot find either sneaker listing.
 
 ---
 
-## 3. The selected item reaches the next tool
+## 2. Singular trouser wording retrieves both catalog terms
 
-In 5 of 5 successful tries, the `suggest_outfit` trace input identifies the
-same listing as `session["selected_item"]`: its `title`, `price`, and `platform`
-match.
+**Target:** 5 of 5 runs.
+
+For `trouser`, `session["search_results"]` contains exactly `lst_005`, `lst_011`,
+`lst_021`, and `lst_025`, in that order.
 
 **Why this target:**
-I chose 5 of 5 because passing the selected listing to the next tool is a direct
-state handoff, not model-generated behavior. A mismatch means the agent may
-suggest an outfit for the wrong item.
-
+I chose 5 of 5 because the fixed catalog and synonym map have deterministic
+results; 4 of 5 would tolerate a broken vocabulary group, while more than 5 of
+5 cannot be required. Missing any ID loses a real matching listing, and an
+extra ID pollutes the results.
 
 ---
 
-## 4. The fit card preserves item facts
+## 3. Exact matches do not trigger fallback expansion
 
-For one fixed selected listing, all 5 uncached fit cards correctly mention the
-item title, price, and platform; the wording may differ between tries.
+**Target:** 5 of 5 runs.
+
+For `pants`, results remain exactly `lst_005` and `lst_011`; trouser-only
+listings `lst_021` and `lst_025` are not added.
 
 **Why this target:**
-I chose 5 of 5 because those facts are fixed in the listing and supplied to the
-model, even though its phrasing can vary. I care about accurate captions, not
-identical wording.
-
+I chose 5 of 5 because exact-token ranking is deterministic; 4 of 5 would allow
+the fallback to broaden a successful query one time in five. That can push an
+exact match out of the limited result list and change which item gets styled;
+5 of 5 is the strictest meaningful target across five runs.
 
 ---
 
-## 5. Search respects the price ceiling
+## 4. Price ceiling remains strict during fallback
 
-Given a query with an explicit maximum price and at least one matching listing,
-every result in `session["search_results"]` costs no more than that limit — 5
-of 5 tries.
+**Target:** 5 of 5 runs.
+
+For `trainers under $20`, `session["search_results"]` contains only `lst_035`,
+priced at $20.00, and no result exceeds the inclusive ceiling.
 
 **Why this target:**
-I chose 5 of 5 because filtering numeric prices against an explicit ceiling is
-deterministic and does not depend on model wording. Returning an over-budget item
-breaks a clear user constraint.
+I chose 5 of 5 because price filtering and fallback both run over fixed local
+data; 4 of 5 would accept an over-budget result in one run. That breaks an
+explicit spending limit, while a stricter rate than 5 of 5 is impossible.
 
+---
+
+## 5. Size-filtered empty fallback stops cleanly
+
+**Target:** 5 of 5 runs.
+
+For `trainers size M`, `session["search_results"]` is empty,
+`session["error"]` names a filter to change, and both
+`session["outfit_suggestion"]` and `session["fit_card"]` remain `None`.
+
+**Why this target:**
+I chose 5 of 5 because the catalog has only US 8 and US 9 sneakers, so size M
+must deterministically produce no results; 4 of 5 would allow a wrong-size shoe
+through. Stopping before model calls avoids spending tokens styling an invalid
+item, and a stricter rate than 5 of 5 is impossible.
 
 ---
 
