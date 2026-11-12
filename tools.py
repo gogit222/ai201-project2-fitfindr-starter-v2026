@@ -12,6 +12,20 @@ def _size_components(size: str) -> set[str]:
     return {part.strip() for part in without_notes.split("/") if part.strip()}
 
 
+_SEARCH_SYNONYM_GROUPS = (
+    frozenset(("trainer", "trainers", "sneaker", "sneakers")),
+    frozenset(("pant", "pants", "trouser", "trousers")),
+)
+
+
+def _expand_search_keywords(keywords: set[str]) -> set[str]:
+    expanded = set(keywords)
+    for group in _SEARCH_SYNONYM_GROUPS:
+        if keywords.intersection(group):
+            expanded.update(group)
+    return expanded
+
+
 # ── Tool 1: search_listings ───────────────────────────────────────────────────
 
 def search_listings(
@@ -60,7 +74,7 @@ def search_listings(
         return []
 
     requested_sizes = _size_components(size) if size else None
-    matches = []
+    searchable_listings = []
     for listing in load_listings():
         if max_price is not None and listing["price"] > max_price:
             continue
@@ -79,14 +93,26 @@ def search_listings(
                 " ".join(listing.get("colors") or []),
             ]
         )
-        score = len(keywords.intersection(
+        searchable_tokens = set(
             re.findall(r"[a-z0-9]+", searchable_text.casefold())
-        ))
-        if score:
-            matches.append((score, listing))
+        )
+        searchable_listings.append((listing, searchable_tokens))
 
-    matches.sort(key=lambda match: match[0], reverse=True)
-    return [listing for _, listing in matches[: config.SEARCH_RESULT_LIMIT]]
+    def find_matches(search_keywords: set[str]) -> list[dict]:
+        matches = [
+            (len(search_keywords.intersection(tokens)), listing)
+            for listing, tokens in searchable_listings
+        ]
+        matches = [(score, listing) for score, listing in matches if score]
+        matches.sort(key=lambda match: match[0], reverse=True)
+        return [listing for _, listing in matches[: config.SEARCH_RESULT_LIMIT]]
+
+    matches = find_matches(keywords)
+    if not matches:
+        expanded_keywords = _expand_search_keywords(keywords)
+        if expanded_keywords != keywords:
+            matches = find_matches(expanded_keywords)
+    return matches
 
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────

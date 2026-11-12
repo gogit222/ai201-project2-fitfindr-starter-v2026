@@ -48,6 +48,14 @@ which search constraints to change.
 
 ---
 
+## The Shape
+
+I added a synonym-aware fallback retrieval strategy to `search_listings`. The current exact-token search remains the first pass; only if it finds no matches will a small clothing synonym map expand terms (for example, “trainers” to “sneakers”) and retry. Size and maximum-price filters remain strict in both passes, so the fallback broadens search wording without relaxing the user’s constraints.
+
+**Out of scope:** I considered adding embedding-based semantic retrieval, but it would add a model-backed search path to this small deterministic catalog. I’m also not changing the listing schema or loosening size and price filters, and I’m not rebuilding the interface; this addition stays within search behavior.
+
+---
+
 ## Tool Inventory
 
 <!-- Four lines per tool. This is worth 2 points and it's the single most
@@ -62,7 +70,7 @@ which search constraints to change.
 
 ### `search_listings`
 
-- **What it does:** Searches listings by description keywords, with optional size and inclusive maximum-price filters. Size matching is case-insensitive: split slash-delimited sizes into whole components and match exactly, ignoring parenthetical fit notes; for example, `M` matches `S/M`, but `L` does not match `XL`.
+- **What it does:** Searches listings by exact description keywords, then retries with a small synonym map only if there are no matches. Optional size and inclusive maximum-price filters apply on both passes. Size matching is case-insensitive: split slash-delimited sizes into whole components and match exactly, ignoring parenthetical fit notes; for example, `M` matches `S/M`, but `L` does not match `XL`.
 - **Inputs:** `description` (`str`), `size` (`str | None`), `max_price` (`float | None`).
 - **Returns:** A list of matching listing dicts, each with `id`, `title`, `description`, `category`, `style_tags`, `size`, `condition`, `price`, `colors`, `brand`, and `platform`, sorted best match first and limited to `config.SEARCH_RESULT_LIMIT`.
 - **When it has nothing:** An empty list (`[]`) if no listings match.
