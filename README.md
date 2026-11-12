@@ -89,23 +89,34 @@ Ten uncached runs of `vintage graphic tee under $30` with the example wardrobe c
 
 ---
 
-## Extension Run Log — Three Runs
+## Extension Evaluation — Before
 
-Each Run column is one independent evaluator batch of five attempts per criterion, with caching disabled. The complete raw output is saved in [Run 1](results/run_2026-11-11_2147_synonym_run1.md), [Run 2](results/run_2026-11-11_2152_synonym_run2.md), and [Run 3](results/run_2026-11-11_2155_synonym_run3.md). The table records the number of passing attempts in each batch.
+Each Run column is one uncached evaluator batch of five attempts per criterion. Raw reports: [Run 1](results/run_2026-11-11_2147_synonym_run1.md), [Run 2](results/run_2026-11-11_2152_synonym_run2.md), [Run 3](results/run_2026-11-11_2155_synonym_run3.md). The original criterion 1 covered `trainers`; the `anorak` probe was an added diagnostic, not yet part of its target.
 
-| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+| Criterion | Original Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. British shoe wording retrieves sneaker listings | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
-| 2. Singular trouser wording retrieves both catalog terms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
-| 3. Exact matches do not trigger fallback expansion | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
-| 4. Price ceiling remains strict during fallback | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 1. `trainers` retrieves sneaker listings | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. `trouser` retrieves both catalog terms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Exact `pants` matches are not broadened | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Trainer fallback respects price ceiling | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
 | 5. Size-filtered empty fallback stops cleanly | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
-### Real Output — Run 1
+**Diagnosis:** None of the original targets was missed or set too low: each tested deterministic behavior and passed 5/5 in all batches. But criterion 1 only tested one vocabulary pair. The diagnostic query `anorak` failed 0/5 in each of three five-attempt probes, despite catalog item `lst_010` being a vintage windbreaker. The failure was in the search stage, specifically `_expand_search_keywords`: its synonym groups did not connect `anorak` to `windbreaker`, so keyword matching returned no results and `run_agent` stopped before outfit generation. This leaves an actual vocabulary-coverage gap that the original criteria did not detect.
 
-Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym_run1.md), produced by `run_eval.py::run_once`; traces were captured by `trace.py::step`.
+**Diagnostic output** — produced by `agent.py::run_agent`, with search implemented by `tools.py::search_listings`:
 
-**Criterion 1 — `trainers` retrieves sneakers**
+```text
+[1] search_listings (via MCP)
+     in:  description='anorak', size=None, max_price=None
+     out: [] (empty)
+     →    no matches; stopping
+```
+
+### Before Output — Run 1
+
+Source for these five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym_run1.md), produced by `run_eval.py::run_once`; traces were captured by `trace.py::step`.
+
+**Criterion 1 — `trainers`**
 
 ```text
 [1] search_listings (via MCP)
@@ -113,7 +124,7 @@ Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym
      out: 2 items: Platform Sneakers — White Chunky Sole, Low-Top Canvas Sneakers — Off-White
 ```
 
-**Criterion 2 — singular `trouser` retrieves both catalog terms**
+**Criterion 2 — `trouser`**
 
 ```text
 [1] search_listings (via MCP)
@@ -121,7 +132,7 @@ Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym
      out: 4 items: Corduroy Wide-Leg Pants — Rust, Low-Rise Cargo Pants — Khaki, Straight Leg Khaki Trousers — Olive … +1 more
 ```
 
-**Criterion 3 — exact `pants` matches are not broadened**
+**Criterion 3 — exact `pants`**
 
 ```text
 [1] search_listings (via MCP)
@@ -129,7 +140,7 @@ Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym
      out: 2 items: Corduroy Wide-Leg Pants — Rust, Low-Rise Cargo Pants — Khaki
 ```
 
-**Criterion 4 — the $20 ceiling remains inclusive and strict**
+**Criterion 4 — `trainers under $20`**
 
 ```text
 [1] search_listings (via MCP)
@@ -137,7 +148,7 @@ Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym
      out: 1 items: Low-Top Canvas Sneakers — Off-White
 ```
 
-**Criterion 5 — size miss stops before model-backed tools**
+**Criterion 5 — `trainers size M`**
 
 ```text
 - stopped early: yes — I couldn't find a listing matching those filters. Try changing the description, size, or maximum price.
@@ -148,6 +159,78 @@ Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym
      out: [] (empty)
      →    no matches; stopping
 ```
+
+### Improvement
+
+I added `anorak`, `anoraks`, `windbreaker`, and `windbreakers` to one synonym group in `tools.py::_SEARCH_SYNONYM_GROUPS`. This addresses the diagnosed search-stage gap; it does not change exact-match priority or size/price filters. Search now finds `lst_010` for `anorak`, allowing the agent to continue to styling.
+
+## Extension Evaluation — After
+
+These are three new uncached batches, again five attempts each. Criterion 1 now checks both the original five `trainers` queries and five `anorak` queries in every batch, for a 10/10 target. Criteria 2–5 retain their original 5/5 targets. Each report also includes the `anorak` diagnostic scenario. Raw reports: [Run 1](results/run_2026-11-11_2208_synonym_after1.md), [Run 2](results/run_2026-11-11_2211_synonym_after2.md), [Run 3](results/run_2026-11-11_2215_synonym_after3.md).
+
+| Criterion | Target After | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. `trainers` and `anorak` aliases retrieve their exact listings | 10 of 10 | 10/10 | 10/10 | 10/10 | MET |
+| 2. `trouser` retrieves both catalog terms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Exact `pants` matches are not broadened | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Trainer fallback respects price ceiling | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Size-filtered empty fallback stops cleanly | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+**After output — Run 1**, produced by `run_eval.py::run_once`; search traces captured by `trace.py::step`:
+
+**Criterion 1 — `trainers`**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='trainers', size=None, max_price=None
+     out: 2 items: Platform Sneakers — White Chunky Sole, Low-Top Canvas Sneakers — Off-White
+```
+
+**Criterion 1 — `anorak` diagnostic, combined with `trainers` for the 10/10 target**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='anorak', size=None, max_price=None
+     out: 1 items: Vintage Windbreaker — Color Block Purple/Teal
+```
+
+**Criterion 2 — `trouser`**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='trouser', size=None, max_price=None
+     out: 4 items: Corduroy Wide-Leg Pants — Rust, Low-Rise Cargo Pants — Khaki, Straight Leg Khaki Trousers — Olive … +1 more
+```
+
+**Criterion 3 — exact `pants`**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='pants', size=None, max_price=None
+     out: 2 items: Corduroy Wide-Leg Pants — Rust, Low-Rise Cargo Pants — Khaki
+```
+
+**Criterion 4 — `trainers under $20`**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='trainers', size=None, max_price=20.0
+     out: 1 items: Low-Top Canvas Sneakers — Off-White
+```
+
+**Criterion 5 — `trainers size M`**
+
+```text
+- stopped early: yes — I couldn't find a listing matching those filters. Try changing the description, size, or maximum price.
+- selected_item: (none)
+- search_results: 0
+[1] search_listings (via MCP)
+     in:  description='trainers', size='M', max_price=None
+     out: [] (empty)
+     →    no matches; stopping
+```
+
+**Did it help?** Yes. The `anorak` diagnostic moved from 0/5 to 5/5 in each batch, and all prior fallback, exact-match, price, and empty-size checks remained at 5/5. The change is limited to the curated alias list; successful searches still proceed through the same two model-backed stages, and no search-stage model call was added.
 
 ---
 

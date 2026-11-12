@@ -31,6 +31,15 @@ I chose 5 of 5 because this is deterministic local search; 4 of 5 would hide a
 missed alias, and a stricter rate than 5 of 5 is impossible. A miss means users
 who say `trainers` cannot find either sneaker listing.
 
+> **Tightened after baseline:** In each evaluation batch, five `trainers`
+> queries must return exactly `lst_019` and `lst_035`, and five `anorak`
+> queries must return exactly `lst_010` (10 of 10 query checks total).
+>
+> **Why tightened:** The original target repeated only one synonym phrase. In
+> three baseline batches, `anorak` returned no results in all 15 attempts even
+> though the catalog contains a matching windbreaker. The tighter target checks
+> a second garment vocabulary and catches that real missed listing.
+
 ---
 
 ## 2. Singular trouser wording retrieves both catalog terms

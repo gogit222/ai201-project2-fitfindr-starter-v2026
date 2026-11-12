@@ -49,6 +49,13 @@ SCENARIOS = [
         "wardrobe": "example",
         "criterion": 5,
     },
+    {
+        # Additional criterion 1 coverage: a new outerwear synonym group.
+        "name": "anorak synonym retrieves windbreaker listing",
+        "query": "anorak",
+        "wardrobe": "example",
+        "criterion": None,
+    },
 ]
 
 WARDROBES = ("example", "empty")

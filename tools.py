@@ -15,6 +15,7 @@ def _size_components(size: str) -> set[str]:
 _SEARCH_SYNONYM_GROUPS = (
     frozenset(("trainer", "trainers", "sneaker", "sneakers")),
     frozenset(("pant", "pants", "trouser", "trousers")),
+    frozenset(("anorak", "anoraks", "windbreaker", "windbreakers")),
 )
 
 
