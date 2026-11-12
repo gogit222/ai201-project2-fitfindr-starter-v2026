@@ -89,6 +89,68 @@ Ten uncached runs of `vintage graphic tee under $30` with the example wardrobe c
 
 ---
 
+## Extension Run Log — Three Runs
+
+Each Run column is one independent evaluator batch of five attempts per criterion, with caching disabled. The complete raw output is saved in [Run 1](results/run_2026-11-11_2147_synonym_run1.md), [Run 2](results/run_2026-11-11_2152_synonym_run2.md), and [Run 3](results/run_2026-11-11_2155_synonym_run3.md). The table records the number of passing attempts in each batch.
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. British shoe wording retrieves sneaker listings | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Singular trouser wording retrieves both catalog terms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Exact matches do not trigger fallback expansion | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Price ceiling remains strict during fallback | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Size-filtered empty fallback stops cleanly | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+### Real Output — Run 1
+
+Source for all five excerpts: [Run 1 report](results/run_2026-11-11_2147_synonym_run1.md), produced by `run_eval.py::run_once`; traces were captured by `trace.py::step`.
+
+**Criterion 1 — `trainers` retrieves sneakers**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='trainers', size=None, max_price=None
+     out: 2 items: Platform Sneakers — White Chunky Sole, Low-Top Canvas Sneakers — Off-White
+```
+
+**Criterion 2 — singular `trouser` retrieves both catalog terms**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='trouser', size=None, max_price=None
+     out: 4 items: Corduroy Wide-Leg Pants — Rust, Low-Rise Cargo Pants — Khaki, Straight Leg Khaki Trousers — Olive … +1 more
+```
+
+**Criterion 3 — exact `pants` matches are not broadened**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='pants', size=None, max_price=None
+     out: 2 items: Corduroy Wide-Leg Pants — Rust, Low-Rise Cargo Pants — Khaki
+```
+
+**Criterion 4 — the $20 ceiling remains inclusive and strict**
+
+```text
+[1] search_listings (via MCP)
+     in:  description='trainers', size=None, max_price=20.0
+     out: 1 items: Low-Top Canvas Sneakers — Off-White
+```
+
+**Criterion 5 — size miss stops before model-backed tools**
+
+```text
+- stopped early: yes — I couldn't find a listing matching those filters. Try changing the description, size, or maximum price.
+- selected_item: (none)
+- search_results: 0
+[1] search_listings (via MCP)
+     in:  description='trainers', size='M', max_price=None
+     out: [] (empty)
+     →    no matches; stopping
+```
+
+---
+
 ## Tool Inventory
 
 <!-- Four lines per tool. This is worth 2 points and it's the single most
