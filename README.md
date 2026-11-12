@@ -696,6 +696,26 @@ Before the fix, the separate `anorak` diagnostic failed 0/5 in each batch: the s
 
 I added `anorak`, `anoraks`, `windbreaker`, and `windbreakers` to a curated synonym group in `tools.py`. This addresses the search-stage vocabulary gap without changing exact-match priority or relaxing size/price filters. The second run log is the After table above, in the same five-criterion, three-batch format; all five targets were met.
 
+**What's Still Broken**
+
+No final criterion was missed: all five were MET in each of the three after batches. The final pass-rate targets were not low for these fixed catalog cases, but criterion 1's original coverage was too narrow: `trainers` passed 5/5 while `anorak` failed 0/5 because `_expand_search_keywords` lacked that alias group. I revised criterion 1 to 10/10 across those two groups and met it; I would tighten it next to five synonym groups with five natural phrasings each, requiring 25/25 exact-result checks. I stopped after fixing this one diagnosed vocabulary gap and running three complete after batches; broader vocabulary coverage remains untested.
+
+The first next step would be to build a five-group regression matrix with five natural query phrasings and exact expected listing IDs per group. I would do this first because the `anorak` miss showed vocabulary coverage—not model quality or filtering—is the remaining risk, and these search-only tests need no model calls.
+
+**How I Used AI**
+
+**Moment 1**
+
+- *What I asked for:* One real capability to add to FitFindr, then help implementing it.
+- *What came back:* A synonym-aware fallback for searches with no exact-token matches.
+- *What I changed:* I checked candidate terms against `data/listings.json` and preserved strict size and price filters on both passes.
+
+**Moment 2**
+
+- *What I asked for:* Help choose measurable extension criteria and run before/after evaluations.
+- *What came back:* The first criteria all passed, but the `anorak` diagnostic exposed a search-stage coverage gap.
+- *What I changed:* I added the `anorak`/`windbreaker` group, retained the original criterion with its revision underneath, and ran three uncached five-attempt batches before and after to check the fix and regressions.
+
 ---
 
 
