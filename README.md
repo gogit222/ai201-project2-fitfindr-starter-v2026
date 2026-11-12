@@ -87,6 +87,8 @@ Ten uncached runs of `vintage graphic tee under $30` with the example wardrobe c
 
 **Measurement method:** In a temporary process, I set `config.CACHE_ENABLED = False` and called `run_agent()` ten times with the same query and wardrobe. For each run, I subtracted `generate.token_counts()` before from after; those counters are populated from Gemini response usage metadata. I cross-checked the ten per-run deltas against `api_usage` in `results/agent_runs.jsonl`, summed the token counts, and divided by ten. This is reported as token usage, not estimated dollars from a pricing page.
 
+**100 people per day:** The measured run averages 923.4 input and 394.1 output tokens. Using the paid Standard rates for `gemini-3.5-flash-lite` on 2026-11-11 ($0.30 per million input tokens and $2.50 per million output tokens), the estimate is `(923.4 × $0.30 + 394.1 × $2.50) / 1,000,000 = $0.00126227` per run; `100 × $0.00126227 = $0.126227`, or about **$0.13 per day** for one uncached run per person. The measurement itself used the free tier; this projection excludes hosting and assumes no extra runs or paid retries. [Provider pricing](https://aistudio.google.com/docs/pricing#gemini-3.5-flash-lite).
+
 ---
 
 ## Extension Evaluation — Before
@@ -630,6 +632,71 @@ The tightened criterion 1 target passed at 5/5, and criteria 2–5 also remained
      left is not. -->
 
 No acceptance criteria were missed in either run, so there is no missed criterion to fix. The remaining untested risk is query generalization: criteria 1, 3, and 4 use the same fixed matching query. I would add varied matching phrasings and item families to measure that broader behavior; I stopped here because this evaluation held inputs fixed to isolate one target change. Model-provider availability also remains external, though the agent now returns an actionable error when it is unavailable.
+
+---
+
+## Capstone
+
+**What This Extends**
+
+This extends FitFindr, the existing secondhand-clothing search and styling system. The new capability is a deterministic synonym fallback in `tools.py::search_listings`, including `anorak` queries for windbreaker listings; size and price remain hard filters.
+
+**The Shape**
+
+Shape A — a user-facing capability. Exact-token search remains first; a curated alias group is tried only after zero results. Out of scope: embeddings or a separate retriever, listing-schema changes, relaxing size/price constraints, and interface work.
+
+**Running It**
+
+Run the local HTTP server with `.\.venv\Scripts\python.exe serve.py` from the repository root after setting up the environment and `GEMINI_API_KEY`. The server URL, health check, dependencies, and setup details are in [RUNNING.md](RUNNING.md).
+
+**Instrumentation**
+
+Each JSONL record in `results/agent_runs.jsonl` has a UTC timestamp, status, duration, model, input query and wardrobe count, parsed filters, result count, selected listing, generated outfit/card or error, and per-run API-call and provider-reported token deltas. These are ten compact excerpts from actual uncached run records; long generated text is elided here and remains in the local JSONL file.
+
+```jsonl
+{"timestamp":"2026-11-12T02:20:46.833432+00:00","status":"completed","duration_ms":13743.708,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":958,"output_tokens":420,"total_tokens":1378}}
+{"timestamp":"2026-11-12T02:21:00.593048+00:00","status":"completed","duration_ms":3620.386,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":905,"output_tokens":374,"total_tokens":1279}}
+{"timestamp":"2026-11-12T02:21:04.228632+00:00","status":"completed","duration_ms":3462.432,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":935,"output_tokens":411,"total_tokens":1346}}
+{"timestamp":"2026-11-12T02:21:07.707448+00:00","status":"completed","duration_ms":3649.506,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":933,"output_tokens":411,"total_tokens":1344}}
+{"timestamp":"2026-11-12T02:21:11.373240+00:00","status":"completed","duration_ms":3422.542,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":948,"output_tokens":420,"total_tokens":1368}}
+{"timestamp":"2026-11-12T02:21:14.811298+00:00","status":"completed","duration_ms":3520.884,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":880,"output_tokens":341,"total_tokens":1221}}
+{"timestamp":"2026-11-12T02:21:18.346095+00:00","status":"completed","duration_ms":3855.133,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":947,"output_tokens":415,"total_tokens":1362}}
+{"timestamp":"2026-11-12T02:21:22.214701+00:00","status":"completed","duration_ms":41236.247,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":3,"prompt_tokens":903,"output_tokens":374,"total_tokens":1277}}
+{"timestamp":"2026-11-12T02:22:14.526295+00:00","status":"completed","duration_ms":3868.892,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":897,"output_tokens":368,"total_tokens":1265}}
+{"timestamp":"2026-11-12T02:22:18.408695+00:00","status":"completed","duration_ms":4001.207,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":928,"output_tokens":407,"total_tokens":1335}}
+```
+
+**What It Costs**
+
+Ten uncached runs measured 923.4 prompt and 394.1 output tokens per run. At the 2026-11-11 paid Standard rates ($0.30/M input, $2.50/M output), `(923.4 × $0.30 + 394.1 × $2.50) / 1,000,000 = $0.00126227` per run; for 100 people making one run each, `100 × $0.00126227 = $0.126227`, about $0.13/day. Measurement used `generate.token_counts()` deltas populated from Gemini response usage metadata, with cache disabled; the projection excludes hosting and assumes one uncached run per person. [Provider pricing](https://aistudio.google.com/docs/pricing#gemini-3.5-flash-lite).
+
+**Run Log and Verdicts**
+
+Each Run column is an independent five-attempt uncached batch. Before reports: [Run 1](results/run_2026-11-11_2147_synonym_run1.md), [Run 2](results/run_2026-11-11_2152_synonym_run2.md), [Run 3](results/run_2026-11-11_2155_synonym_run3.md). After reports: [Run 1](results/run_2026-11-11_2208_synonym_after1.md), [Run 2](results/run_2026-11-11_2211_synonym_after2.md), [Run 3](results/run_2026-11-11_2215_synonym_after3.md).
+
+| Criterion | Before Target | Before 1 | Before 2 | Before 3 | Before Verdict |
+|---|---|---|---|---|---|
+| 1. `trainers` retrieves sneakers | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. `trouser` retrieves both catalog terms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Exact `pants` matches are not broadened | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Trainer fallback respects price ceiling | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Size-filtered empty search stops cleanly | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+| Criterion | After Target | After 1 | After 2 | After 3 | After Verdict |
+|---|---|---|---|---|---|
+| 1. `trainers` and `anorak` retrieve exact listings | 10 of 10 | 10/10 | 10/10 | 10/10 | MET |
+| 2. `trouser` retrieves both catalog terms | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Exact `pants` matches are not broadened | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Trainer fallback respects price ceiling | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Size-filtered empty search stops cleanly | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+Before the fix, the separate `anorak` diagnostic failed 0/5 in each batch: the search stage's `_expand_search_keywords` had no `anorak`/`windbreaker` group, so `search_listings` returned an empty list and the agent stopped. After the fix, that diagnostic returned `lst_010` 5/5 in all three batches; every other criterion remained at its target.
+
+**The Improvement**
+
+I added `anorak`, `anoraks`, `windbreaker`, and `windbreakers` to a curated synonym group in `tools.py`. This addresses the search-stage vocabulary gap without changing exact-match priority or relaxing size/price filters. The second run log is the After table above, in the same five-criterion, three-batch format; all five targets were met.
+
+---
 
 
 
