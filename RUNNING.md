@@ -23,6 +23,23 @@ From the repository root on Windows, after creating `.venv`, installing requirem
 
 The server prints `http://localhost:5000`. Check `GET http://localhost:5000/health` for `{"status":"ok"}`. Send a request to `POST http://localhost:5000/ask` with JSON such as `{"query":"vintage graphic tee under $30"}`. Press Ctrl+C in the server terminal to stop it. This is Flask's local development server, not a production deployment server.
 
+### Run Logs
+
+Every `run_agent` invocation appends one JSON object to `results/agent_runs.jsonl`, including completed, stopped, and failed runs. Each record has a UTC `timestamp`, `input` (query and wardrobe item count), `output` (parsed filters, result count, selected listing, outfit, fit card, and error), `duration_ms`, `status`, configured `model`, and `api_usage` (model calls and provider-reported prompt/output/total tokens). `stopped` means search returned no matches; model errors and raised exceptions are `failed`. The file is local and Git-ignored because it can contain user queries and generated text.
+
+### Ten-Run Token Measurement
+
+Measured on 2026-11-11 using ten successful runs of `vintage graphic tee under $30` with the example wardrobe. The measurement process set `config.CACHE_ENABLED = False` in memory, called `run_agent()` ten times, and took the difference in `generate.token_counts()` before and after each run; those counters are populated from Gemini response usage metadata. The ten corresponding entries in `results/agent_runs.jsonl` were cross-checked. No pricing-page estimate was used.
+
+| Measure | Total for 10 runs | Average per run |
+|---|---:|---:|
+| Prompt tokens | 9,234 | 923.4 |
+| Output tokens | 3,941 | 394.1 |
+| Total tokens | 13,175 | 1,317.5 |
+| Model call attempts | 21 | 2.1 |
+
+All ten runs completed. One rate-limit response caused a retry, so there were 21 model call attempts for the ten runs. Token totals are provider-reported usage; they are the measured cost here, not a dollar estimate.
+
 ### Verified Run Record
 
 Tested from the clean working tree at commit `f7183c3` on 2026-11-11. The command above started the service; `GET /health` returned `{"status":"ok"}`. The following summary is captured from a real `POST /ask` response at `http://localhost:5000/ask`:

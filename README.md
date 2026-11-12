@@ -56,6 +56,39 @@ I added a synonym-aware fallback retrieval strategy to `search_listings`. The cu
 
 ---
 
+## Instrumentation
+
+`agent.py::run_agent` appends one JSON record per run to `results/agent_runs.jsonl`. The entries below are compact excerpts from the ten uncached cost-measurement runs; generated outfit and caption text is omitted here, but remains in the JSONL records.
+
+```jsonl
+{"timestamp":"2026-11-12T02:20:46.833432+00:00","status":"completed","duration_ms":13743.708,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":958,"output_tokens":420,"total_tokens":1378}}
+{"timestamp":"2026-11-12T02:21:00.593048+00:00","status":"completed","duration_ms":3620.386,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":905,"output_tokens":374,"total_tokens":1279}}
+{"timestamp":"2026-11-12T02:21:04.228632+00:00","status":"completed","duration_ms":3462.432,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":935,"output_tokens":411,"total_tokens":1346}}
+{"timestamp":"2026-11-12T02:21:07.707448+00:00","status":"completed","duration_ms":3649.506,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":933,"output_tokens":411,"total_tokens":1344}}
+{"timestamp":"2026-11-12T02:21:11.373240+00:00","status":"completed","duration_ms":3422.542,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":948,"output_tokens":420,"total_tokens":1368}}
+{"timestamp":"2026-11-12T02:21:14.811298+00:00","status":"completed","duration_ms":3520.884,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":880,"output_tokens":341,"total_tokens":1221}}
+{"timestamp":"2026-11-12T02:21:18.346095+00:00","status":"completed","duration_ms":3855.133,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":947,"output_tokens":415,"total_tokens":1362}}
+{"timestamp":"2026-11-12T02:21:22.214701+00:00","status":"completed","duration_ms":41236.247,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":3,"prompt_tokens":903,"output_tokens":374,"total_tokens":1277}}
+{"timestamp":"2026-11-12T02:22:14.526295+00:00","status":"completed","duration_ms":3868.892,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":897,"output_tokens":368,"total_tokens":1265}}
+{"timestamp":"2026-11-12T02:22:18.408695+00:00","status":"completed","duration_ms":4001.207,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":10},"output":{"search_result_count":10,"selected_item_id":"lst_002","error":null},"api_usage":{"model_calls":2,"prompt_tokens":928,"output_tokens":407,"total_tokens":1335}}
+```
+
+**Failed run: controlled failure injection** (not a provider outage). `suggest_outfit` was patched to raise `ModelUnavailable("controlled README example")` after search returned ten listings. The run was recorded with `status: failed`, zero model calls, and the error in `output`:
+
+```json
+{"timestamp":"2026-11-12T02:25:15.521046+00:00","status":"failed","duration_ms":3023.101,"model":"gemini-3.5-flash-lite","input":{"query":"vintage graphic tee under $30","wardrobe_item_count":0},"output":{"search_result_count":10,"selected_item":{"id":"lst_002","title":"Y2K Baby Tee — Butterfly Print","price":18.0,"platform":"depop"},"error":"Outfit suggestion failed because the model was unavailable. controlled README example"},"api_usage":{"model_calls":0,"prompt_tokens":0,"output_tokens":0,"total_tokens":0}}
+```
+
+---
+
+## What It Costs
+
+Ten uncached runs of `vintage graphic tee under $30` with the example wardrobe consumed 13,175 provider-reported tokens: 9,234 prompt and 3,941 output. That averages **1,317.5 tokens per run** (923.4 prompt and 394.1 output). All ten completed; there were 21 model-call attempts because one rate-limit response triggered a retry.
+
+**Measurement method:** In a temporary process, I set `config.CACHE_ENABLED = False` and called `run_agent()` ten times with the same query and wardrobe. For each run, I subtracted `generate.token_counts()` before from after; those counters are populated from Gemini response usage metadata. I cross-checked the ten per-run deltas against `api_usage` in `results/agent_runs.jsonl`, summed the token counts, and divided by ten. This is reported as token usage, not estimated dollars from a pricing page.
+
+---
+
 ## Tool Inventory
 
 <!-- Four lines per tool. This is worth 2 points and it's the single most

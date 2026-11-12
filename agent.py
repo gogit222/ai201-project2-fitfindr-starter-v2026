@@ -13,8 +13,13 @@ Build and test your three tools in `tools.py` first. Then come here.
     python agent.py          runs both example paths below
 """
 
+import datetime as dt
+import json
 import re
+import time
 
+import config
+import generate as generate_module
 import trace as trace_module
 from mcp_client import call_tool
 from generate import ModelUnavailable
@@ -91,7 +96,7 @@ def _parse_query(query: str) -> dict:
 
 # ── planning loop ─────────────────────────────────────────────────────────────
 
-def run_agent(query: str, wardrobe: dict) -> dict:
+def _run_agent(query: str, wardrobe: dict) -> dict:
     """
     Run the loop once and return the finished session.
 
@@ -191,6 +196,69 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         returned=session["fit_card"],
     )
     return session
+
+
+def _append_run_record(record: dict) -> None:
+    path = config.RESULTS_DIR / "agent_runs.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as log_file:
+        log_file.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def run_agent(query: str, wardrobe: dict) -> dict:
+    """Run the agent and append one structured JSONL record for the run."""
+    started_at = dt.datetime.now(dt.timezone.utc)
+    started = time.perf_counter()
+    calls_before = generate_module.call_count()
+    tokens_before = generate_module.token_counts()
+    record = {
+        "timestamp": started_at.isoformat(),
+        "model": config.MODEL,
+        "input": {
+            "query": query,
+            "wardrobe_item_count": len((wardrobe or {}).get("items") or []),
+        },
+    }
+
+    try:
+        session = _run_agent(query, wardrobe)
+        selected_item = session.get("selected_item") or {}
+        if session.get("error"):
+            record["status"] = (
+                "failed" if session.get("search_results") else "stopped"
+            )
+        else:
+            record["status"] = "completed"
+        record["output"] = {
+            "parsed_query": session.get("parsed"),
+            "search_result_count": len(session.get("search_results") or []),
+            "selected_item": {
+                key: selected_item.get(key)
+                for key in ("id", "title", "price", "platform")
+            } if selected_item else None,
+            "outfit_suggestion": session.get("outfit_suggestion"),
+            "fit_card": session.get("fit_card"),
+            "error": session.get("error"),
+        }
+        return session
+    except Exception as exc:
+        record["status"] = "failed"
+        record["output"] = {
+            "exception_type": type(exc).__name__,
+            "error": str(exc),
+        }
+        raise
+    finally:
+        record["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        calls_after = generate_module.call_count()
+        tokens_after = generate_module.token_counts()
+        record["api_usage"] = {
+            "model_calls": calls_after - calls_before,
+            "prompt_tokens": tokens_after["prompt"] - tokens_before["prompt"],
+            "output_tokens": tokens_after["output"] - tokens_before["output"],
+            "total_tokens": tokens_after["total"] - tokens_before["total"],
+        }
+        _append_run_record(record)
 
 
 # ── running it directly ───────────────────────────────────────────────────────
