@@ -1,6 +1,52 @@
 # Running FitFindr
 
-Everything about how the starter works and how to use it.
+How to set up and run the current FitFindr system locally.
+
+---
+
+## Current Local Run
+
+### Environment
+
+- Python 3.11, 3.12, or 3.13 is supported. This run was verified with Python 3.13.13 on Windows.
+- Install the project dependencies with `pip install -r requirements.txt`. The declared ranges are `python-dotenv>=1.0,<1.2`, `google-genai>=1.0,<2.0`, `mcp>=1.0,<2.0`, `flask>=3.0,<4.0`, and `gunicorn>=21.2,<24.0`. Versions in the verified environment were python-dotenv 1.1.1, google-genai 1.75.0, mcp 1.30.0, Flask 3.1.3, and gunicorn 23.0.0.
+- Create `.env` from `.env.example` and set `GEMINI_API_KEY`. A network connection is required when a model response is not available in the local response cache.
+- The configured model is Gemini `gemini-3.5-flash-lite`, called through the hosted API. No model files or weights are downloaded; local model-file size is 0 bytes.
+
+### Start
+
+From the repository root on Windows, after creating `.venv`, installing requirements, and configuring `.env`, start the local HTTP server with this exact command:
+
+```powershell
+.\.venv\Scripts\python.exe serve.py
+```
+
+The server prints `http://localhost:5000`. Check `GET http://localhost:5000/health` for `{"status":"ok"}`. Send a request to `POST http://localhost:5000/ask` with JSON such as `{"query":"vintage graphic tee under $30"}`. Press Ctrl+C in the server terminal to stop it. This is Flask's local development server, not a production deployment server.
+
+### Verified Run Record
+
+Tested from the clean working tree at commit `f7183c3` on 2026-11-11. The command above started the service; `GET /health` returned `{"status":"ok"}`. The following summary is captured from a real `POST /ask` response at `http://localhost:5000/ask`:
+
+```json
+{
+  "query": "vintage graphic tee under $30",
+  "parsed": {
+    "description": "vintage graphic tee",
+    "max_price": 30.0,
+    "size": null
+  },
+  "search_result_count": 10,
+  "selected_item": {
+    "id": "lst_002",
+    "title": "Y2K Baby Tee — Butterfly Print",
+    "price": 18.0,
+    "platform": "depop"
+  },
+  "outfit_created": true,
+  "fit_card": "Found the absolute dream Y2K Baby Tee — Butterfly Print scrolling depop for just $18.00. I’m living for the pink and purple graphic and can’t wait to style it with baggy dark-wash jeans and chunky sneakers for an easy weekend fit.",
+  "error": null
+}
+```
 
 ---
 
@@ -62,9 +108,9 @@ python app.py ask 'vintage graphic tee under $30'
 > and substitutes nothing. You get results with no price ceiling and no error
 > saying so. Single quotes are literal in PowerShell, bash and zsh alike.
 
-That last one runs the loop. All three tools are stubs, so it will tell you the
-loop isn't built yet. **That's the correct starting position** — it runs, and it
-does nothing.
+That last one runs the complete agent flow: listing search, outfit suggestion,
+and fit-card generation. The matching query above has been verified against the
+local system.
 
 ---
 
@@ -160,17 +206,17 @@ the point of the session.
 | File | What it does |
 |---|---|
 | `config.py` | Every setting worth changing — **TEMPERATURE and the cache are at the top** |
-| `tools.py` | Your three tools. **Stubs — you build these** |
-| `agent.py` | The planning loop and the session. **Stub — you build this** |
+| `tools.py` | Listing search, outfit suggestions, and fit-card generation |
+| `agent.py` | The planning loop and session state |
 | `generate.py` | The only thing that calls out to a service. Handles pacing and quota |
 | `trace.py` | The trace helper, and the loop's stop condition |
 | `app.py` | The command line |
 | `serve.py` | The same agent over HTTP, for deploying — **unit 9** |
-| `mcp_server.py` | Your MCP server — **unit 4, you register the tool** |
+| `mcp_server.py` | MCP server exposing listing search |
 | `mcp_client.py` | Calling an MCP tool from your agent. Given to you |
-| `scenarios.py` | What your test runs. **You fill this in** |
+| `scenarios.py` | Evaluation scenarios |
 | `run_eval.py` | Runs the scenarios repeatedly and writes the run log |
-| `criteria.md` | Your five acceptance criteria. **You fill this in** |
+| `criteria.md` | The five acceptance criteria |
 | `data/` | 40 listings and the wardrobe schema |
 | `utils/data_loader.py` | Loading the data. Use this rather than reading the files yourself |
 | `results/` | Run logs. **Commit these** — they're your evidence |
